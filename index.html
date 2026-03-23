@@ -188,6 +188,32 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+  // Sua configuração (copiada do que você me mandou)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbu-o_m4HEV8EQRL4t2bQyC8-EzTJhhDs",
+    authDomain: "financeiro-otavio-bf717.firebaseapp.com",
+    databaseURL: "https://financeiro-otavio-bf717-default-rtdb.firebaseio.com",
+    projectId: "financeiro-otavio-bf717",
+    storageBucket: "financeiro-otavio-bf717.firebasestorage.app",
+    messagingSenderId: "445036029492",
+    appId: "1:445036029492:web:8437cd2ac0c714d0498c61"
+  };
+
+  // Inicializa o Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // Torna o 'db' e as funções acessíveis para o seu script.js
+  window.db = db;
+  window.dbRef = ref;
+  window.dbSet = set;
+  window.dbOnValue = onValue;
+</script>
+
 <script src="script.js"></script>
 </body>
 </html>

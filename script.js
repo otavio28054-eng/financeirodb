@@ -119,8 +119,42 @@ function loadD(){
   };
 }
 
-function persist(){localStorage.setItem('fin6',JSON.stringify(D));}
-let D=loadD();
+function persist() {
+  // 1. Continua salvando no navegador (como um backup rápido)
+  localStorage.setItem('fin6', JSON.stringify(D));
+  
+  // 2. Envia para o Banco de Dados do Firebase (Nuvem)
+  // Verificamos se o 'db' (que configuramos no index.html) existe
+  if (window.db && window.dbSet && window.dbRef) {
+    window.dbSet(window.dbRef(window.db, 'meus_dados/'), D)
+      .then(() => {
+        console.log("Sincronizado com o Firebase com sucesso!");
+      })
+      .catch((error) => {
+        console.error("Erro ao salvar no Firebase:", error);
+      });
+  }
+}
+// Inicia com uma estrutura vazia até o Firebase responder
+let D = { fixed: [], card: [], months: {}, investments: [] };
+
+// Escuta o Banco de Dados em tempo real
+if (window.db) {
+  const dataRef = window.dbRef(window.db, 'meus_dados/');
+  
+  window.dbOnValue(dataRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      console.log("Dados carregados do Firebase!");
+      D = data;
+      renderAll(); // Atualiza a tela com o que veio do Google
+    } else {
+      console.log("Banco vazio. Carregando dados iniciais...");
+      D = loadD(); // Carrega os exemplos do seu script original
+      persist();   // Salva esses exemplos no Firebase pela primeira vez
+    }
+  });
+}
 
 function getMonth(y,m){
   const k=mKey(y,m);
@@ -748,5 +782,3 @@ document.addEventListener('keydown',e=>{
 });
 document.getElementById('qVal').addEventListener('keydown',e=>{if(e.key==='Enter')quickAdd();});
 document.getElementById('iVal').addEventListener('keydown',e=>{if(e.key==='Enter')addInv();});
-
-renderAll();
