@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minhas Finanças</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+<header>
+  <div><div class="logo">minhas<span>.</span>finanças</div><div class="logo-sub">controle financeiro pessoal</div></div>
+</header>
+
+<div class="month-nav">
+  <button class="mnav-btn" onclick="changeMonth(-1)">&#8592;</button>
+  <div class="mnav-center">
+    <div class="mnav-month" id="navMonth">—</div>
+    <div class="mnav-year" id="navYear">—</div>
+    <div class="mnav-home" onclick="goHome()">home</div>
+  </div>
+  <button class="mnav-btn" onclick="changeMonth(1)">&#8594;</button>
+</div>
+
+<div class="summary-bar">
+  <div class="sbar inc"><div class="sbar-lbl">Renda</div><div class="sbar-val g" id="sbInc">R$ 0</div></div>
+  <div class="sbar exp"><div class="sbar-lbl">Gastos</div><div class="sbar-val r" id="sbExp">R$ 0</div></div>
+  <div class="sbar bal"><div class="sbar-lbl">Saldo</div><div class="sbar-val a" id="sbBal">R$ 0</div></div>
+  <div class="sbar inv"><div class="sbar-lbl">Investido</div><div class="sbar-val p" id="sbInv">R$ 0</div></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="goTab('quick')">Lançamento rápido</div>
+  <div class="tab"        onclick="goTab('detail')">Despesas detalhadas</div>
+  <div class="tab"        onclick="goTab('charts')">Gráficos</div>
+  <div class="tab"        onclick="goTab('annual')">Visão anual</div>
+  <div class="tab"        onclick="goTab('invest')">Investimentos</div>
+</div>
+
+<div id="tab-quick" class="tab-content active">
+  <div class="card-box">
+    <div class="form-title">+ novo lançamento</div>
+    <div class="qgrid">
+      <div class="qf"><label>Data</label><input type="date" id="qDate"></div>
+      <div class="qf"><label>Descrição</label><input type="text" id="qName" placeholder="Ex: iFood, Salário..."></div>
+      <div class="qf"><label>Valor R$</label><input type="number" id="qVal" step="0.01" min="0" placeholder="0,00" oninput="updateDivPreview()"></div>
+      <div class="qf"><label>Categoria</label><select id="qCat"></select></div>
+    </div>
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+      <div class="par-toggle">
+        <input type="checkbox" id="qParCheck" onchange="toggleParBox()">
+        <label for="qParCheck">Parcelado no cartão?</label>
+      </div>
+      <div class="par-toggle">
+        <input type="checkbox" id="qDivCheck" onchange="updateDivPreview()">
+        <label for="qDivCheck">Dividido ÷ 2?</label>
+      </div>
+    </div>
+    <div id="divPreview" style="display:none;font-family:'DM Mono',monospace;font-size:.65rem;color:var(--amber-text);margin-top:4px;margin-bottom:2px;"></div>
+    <div class="par-box" id="parBox">
+      <div class="qgrid2">
+        <div class="qf"><label>Parcela atual (ex: 1)</label><input type="number" id="qPA" min="1" placeholder="1" oninput="calcEndMonth()"></div>
+        <div class="qf"><label>Total de parcelas (ex: 12)</label><input type="number" id="qPT" min="1" placeholder="12" oninput="calcEndMonth()"></div>
+        <div class="qf" style="display:flex;align-items:flex-end;"><button class="btn-plus" onclick="quickAdd()">+</button></div>
+      </div>
+      <div class="par-info" id="parInfo"></div>
+    </div>
+    <div id="qAddRow" style="display:flex;justify-content:flex-end;">
+      <button class="btn-plus" style="width:80px;" onclick="quickAdd()">+</button>
+    </div>
+  </div>
+  <div class="list-lbl" id="qListLbl">Lançamentos de —</div>
+  <div class="ilist" id="qList"><div class="empty">nenhum lançamento neste mês</div></div>
+</div>
+
+<div id="tab-detail" class="tab-content">
+  <div class="commit-wrap">
+    <div class="commit-hd"><span>RENDA COMPROMETIDA</span><span id="cPct">0%</span></div>
+    <div class="pbar"><div class="pfill" id="cBar" style="width:0%;background:var(--green)"></div></div>
+  </div>
+  <div class="sec-block">
+    <div class="sec-hd"><div class="sec-title st-inc">Renda</div><div class="sec-total" id="dIncT">R$ 0,00</div></div>
+    <div class="ilist" id="dIncL"><div class="empty">nenhuma renda</div></div>
+    <button class="btn-add-sec" onclick="openNew('salario','income')">+ adicionar renda</button>
+  </div>
+  <div class="sec-block">
+    <div class="sec-hd"><div class="sec-title st-fix">Despesas fixas</div><div class="sec-total" id="dFixT">R$ 0,00</div></div>
+    <div class="ilist" id="dFixL"><div class="empty">nenhuma despesa fixa</div></div>
+    <button class="btn-add-sec" onclick="openNew('outros','fixed')">+ adicionar despesa fixa</button>
+  </div>
+  <div class="sec-block">
+    <div class="sec-hd"><div class="sec-title st-card">Cartão de crédito</div><div class="sec-total" id="dCardT">R$ 0,00</div></div>
+    <div class="ilist" id="dCardL"><div class="empty">nenhuma parcela</div></div>
+    <button class="btn-add-sec" onclick="openNew('outros','card')">+ adicionar parcela</button>
+  </div>
+  <div class="sec-block">
+    <div class="sec-hd"><div class="sec-title st-var">Gastos variáveis</div><div class="sec-total" id="dVarT">R$ 0,00</div></div>
+    <div id="dVarContent"></div>
+  </div>
+</div>
+
+<div id="tab-charts" class="tab-content">
+  <div class="charts-grid">
+    <div class="ccrd">
+      <div class="ctitle">Onde estou gastando mais</div>
+      <div id="donutWrap" style="position:relative;width:100%;height:200px;"><canvas id="cDonut"></canvas></div>
+      <div class="leg-row" id="donutLeg"></div>
+    </div>
+    <div class="ccrd">
+      <div class="ctitle">Top categorias variáveis</div>
+      <div id="barWrap" style="position:relative;width:100%;height:200px;"><canvas id="cBar"></canvas></div>
+    </div>
+    <div class="ccrd full">
+      <div class="ctitle">Fluxo mensal — últimos 12 meses</div>
+      <div id="flowWrap" style="position:relative;width:100%;height:230px;"><canvas id="cFlow"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div id="tab-annual" class="tab-content">
+  <div class="year-nav">
+    <button class="year-nav-btn" onclick="changeYear(-1)">&#8592;</button>
+    <div class="year-lbl" id="annualYear">2025</div>
+    <button class="year-nav-btn" onclick="changeYear(1)">&#8594;</button>
+  </div>
+  <div class="annual-grid" id="annualGrid"></div>
+  <div class="ccrd">
+    <div class="ctitle">Saldo mês a mês</div>
+    <div id="annWrap" style="position:relative;width:100%;height:200px;"><canvas id="cAnnual"></canvas></div>
+  </div>
+</div>
+
+<div id="tab-invest" class="tab-content">
+  <div class="inv-stats">
+    <div class="iscard"><div class="iscard-lbl">Total investido</div><div class="iscard-val" id="invTot">R$ 0,00</div><div class="iscard-sub" id="invCnt">0 aportes</div></div>
+    <div class="iscard"><div class="iscard-lbl">Último aporte</div><div class="iscard-val" id="invLst">—</div><div class="iscard-sub" id="invLstD">—</div></div>
+    <div class="iscard"><div class="iscard-lbl">Média mensal</div><div class="iscard-val" id="invAvg">R$ 0,00</div><div class="iscard-sub">por mês com aportes</div></div>
+  </div>
+  <div class="card-box">
+    <div class="form-title">Registrar aporte</div>
+    <div class="inv-row">
+      <div class="qf"><label>Descrição</label><input type="text" id="iName" placeholder="Ex: Tesouro Selic..."></div>
+      <div class="qf"><label>Valor R$</label><input type="number" id="iVal" step="0.01" min="0" placeholder="0,00"></div>
+      <div class="qf"><label>Mês referência</label><input type="month" id="iMonth"></div>
+      <div class="qf"><button class="btn-plus" onclick="addInv()">+</button></div>
+    </div>
+  </div>
+  <div class="ccrd" style="margin-bottom:1.2rem;">
+    <div class="ctitle">Patrimônio acumulado</div>
+    <div id="invWrap" style="position:relative;width:100%;height:210px;"><canvas id="cInv"></canvas></div>
+  </div>
+  <div class="list-lbl">Histórico completo</div>
+  <div class="ilist" id="invList"><div class="empty">nenhum aporte registrado</div></div>
+</div>
+
+</div><div class="overlay" id="overlay" onclick="closeBg(event)">
+  <div class="modal">
+    <div class="modal-title" id="mTitle">Adicionar</div>
+    <div class="field"><label>Data</label><input type="date" id="fDate"></div>
+    <div class="field"><label>Descrição</label><input type="text" id="fName" placeholder="Nome"></div>
+    <div class="f2">
+      <div class="field"><label>Valor R$</label><input type="number" id="fVal" step="0.01" min="0"></div>
+      <div class="field" id="fDayW"><label>Dia vencimento</label><input type="number" id="fDay" min="1" max="31" placeholder="—"></div>
+    </div>
+    <div class="field" id="fCatW"><label>Categoria</label><select id="fCat"></select></div>
+    <div id="cardX" style="display:none;">
+      <div class="field">
+        <label>Tipo</label>
+        <select id="fTipo" onchange="tglPar()">
+          <option value="fixa">Fixa mensal</option>
+          <option value="parcelada">Parcelada</option>
+        </select>
+      </div>
+      <div class="f2" id="parRow" style="display:none;">
+        <div class="field"><label>Parcela atual</label><input type="number" id="fPA" min="1" oninput="calcModalEnd()"></div>
+        <div class="field"><label>Total parcelas</label><input type="number" id="fPT" min="1" oninput="calcModalEnd()"></div>
+      </div>
+      <div class="par-info" id="mParInfo"></div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveModal()">Salvar</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
